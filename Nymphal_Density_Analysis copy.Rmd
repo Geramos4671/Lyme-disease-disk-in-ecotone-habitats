@@ -1,0 +1,224 @@
+---
+title: "Tick abundance Analyisis"
+author: "Gerardo Ramos"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+### Lets load our packages first
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(emmeans)
+library(multcompView)
+library(multcomp)
+```
+
+### set working directory for all chunks in this file (default working directory is wherever Rmd file is)
+```{r, setup, include=FALSE}
+setwd("~/Documents/GitHub/Lyme-disease-disk-in-ecotone-habitats/Dataset")
+```
+
+## Lets read in our data 
+```{r}
+ticks<-read.csv("Plot_Data copy.csv", header = TRUE, stringsAsFactors = TRUE)
+```
+
+# Null Hypothesis: There are equal abundances of *Ixodes pacificus* in forest interiors, forest edge, and grasslands
+
+# Alternative Hypothesis: The abudances of *Ixodes pacificus* are different between forest interiors, forest edge, and grasslands
+
+
+
+## Make a boxplot & violin plotand IPACs per habitat
+
+```{r}
+ticks$Habitat <- factor(ticks$Habitat, levels = c("exterior", "edge", "interior"))
+
+ p1 <- ggplot(ticks,aes(x=Habitat,y=IPAC_N, fill = Habitat)) +
+     geom_boxplot() +
+     theme_classic(15) +
+     ylab("Nymphal Ixodes pacificus Count") +
+     xlab("Habitat Type")+
+     scale_fill_manual(values = c("exterior" = "#FEF851", "edge" = "#A1B234", "interior" = "#4DA829"))+
+   theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    legend.title = element_text(size = 20),  # Title of the legend
+    axis.text.x = element_text(size = 20),  # x-axis category labels
+   legend.text = element_text(size = 18)    # Labels inside the legend
+  )
+p1
+
+ p2 <- ggplot(ticks,aes(x=Habitat,y=IPAC_L, fill = Habitat)) +
+     geom_boxplot() +
+     theme_classic(15) +
+     ylab("Larval Ixodes pacificus Count") +
+     xlab("Habitat Type")+
+     scale_fill_manual(values = c("exterior" = "#FEF851", "edge" = "#A1B234", "interior" = "#4DA829"))+
+   theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    legend.title = element_text(size = 20),  # Title of the legend
+    axis.text.x = element_text(size = 20),  # x-axis category labels
+   legend.text = element_text(size = 18)    # Labels inside the legend
+  )
+p2
+
+ p3 <- ggplot(ticks,aes(x=Habitat,y=IPAC_A, fill = Habitat)) +
+     geom_boxplot() +
+     theme_classic(15) +
+     ylab("Adult Ixodes pacificus Count") +
+     xlab("Habitat Type")+
+     scale_fill_manual(values = c("exterior" = "#FEF851", "edge" = "#A1B234", "interior" = "#4DA829"))+
+   theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    legend.title = element_text(size = 20),  # Title of the legend
+    axis.text.x = element_text(size = 20),  # x-axis category labels
+   legend.text = element_text(size = 18)    # Labels inside the legend
+  )
+p3
+```
+
+
+
+## Make a boxplot & violin plot for DEOC Adults 
+```{r}
+ p4 <- ggplot(ticks,aes(x=Habitat,y=DEOC_A, fill = Habitat)) +
+     geom_boxplot() +
+     theme_classic(15) +
+     ylab("Adult Ixodes pacificus Count") +
+     xlab("Habitat Type")+
+     scale_fill_manual(values = c("exterior" = "#FEF851", "edge" = "#A1B234", "interior" = "#4DA829"))+
+   theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    legend.title = element_text(size = 20),  # Title of the legend
+    axis.text.x = element_text(size = 20),  # x-axis category labels
+   legend.text = element_text(size = 18)    # Labels inside the legend
+  )
+p4
+```
+
+## Lets look at the assumptions.
+```{r}
+hist(ticks$IPAC_L)
+hist(ticks$IPAC_N)
+hist(ticks$DEOC_A)
+```
+
+## All of these are skewed to the right and are count data so that means we can use a poisson family for our GLMM. 
+
+## Lets start with the larvae
+```{r}
+m1<- glmmTMB(IPAC_L ~ Habitat +
+                   (1 | Site),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m2<- glmmTMB(IPAC_L ~ Habitat +
+                   (1 | Site) + (1 | Date),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m3<- glmmTMB(IPAC_L ~ Habitat,
+                   family = poisson(link = "log"),
+                   data = ticks)
+
+
+AIC(m1, m2, m3)
+
+summary(m2)
+
+```
+
+
+## Lets do IPAC Nymphs
+```{r}
+m4<- glmmTMB(IPAC_N ~ Habitat +
+                   (1 | Site),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m5<- glmmTMB(IPAC_N ~ Habitat +
+                   (1 | Site) + (1 | Date),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m6<- glmmTMB(IPAC_N ~ Habitat,
+                   family = poisson(link = "log"),
+                   data = ticks)
+
+
+AIC(m4, m5, m6)
+
+summary(m5)
+
+```
+
+
+
+## Lets do IPAC DEOC
+```{r}
+m7<- glmmTMB(DEOC_A ~ Habitat +
+                   (1 | Site),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m8<- glmmTMB(DEOC_A ~ Habitat +
+                   (1 | Site) + (1 | Date),
+                   family = poisson(link = "log"),
+                   data = ticks)
+m9<- glmmTMB(DEOC_A ~ Habitat,
+                   family = poisson(link = "log"),
+                   data = ticks)
+
+
+AIC(m7, m8, m9)
+
+summary(m8)
+```
+
+
+## Now lets run the emmeans for the models that we picked. 
+
+## Lets start with IPAC larvae
+```{r}
+library(emmeans)
+em2 <- emmeans(m2, ~ Habitat)
+
+# Pairwise comparisons between habitat types
+pairs(em2, adjust = "tukey")
+```
+## Lets start with IPAC Nymphs
+```{r}
+library(emmeans)
+em5 <- emmeans(m5, ~ Habitat)
+
+# Pairwise comparisons between habitat types
+pairs(em5, adjust = "tukey")
+```
+
+
+## Lets start with DEOC Adults
+```{r}
+library(emmeans)
+em8 <- emmeans(m8, ~ Habitat)
+
+# Pairwise comparisons between habitat types
+pairs(em8, adjust = "tukey")
+```
+
+
+## Finalize Figures for IPAC N
+```{r}
+p1+ annotate("text", x = 1, y = 3, label = "A", size = 6, fontface = "bold") + annotate("text", x = 2, y = 22, label = "B", size = 6, fontface = "bold") + annotate("text", x = 3, y = 15, label = "C", size = 6, fontface = "bold")
+```
+
+## Finalize Figures for DEOC adults 
+```{r}
+p4+ annotate("text", x = 1, y = 6, label = "AB", size = 6, fontface = "bold") + annotate("text", x = 2, y = 7, label = "A", size = 6, fontface = "bold") + annotate("text", x = 3, y = 4, label = "B", size = 6, fontface = "bold")
+```
+
+
+
+# Results
+For nymphal *Ixodes pacificus* we observed that their populations increase as you move along a gradient from grassland to oakwoodlands. Each habitat surveyed had a significanlty different abundance of ticks. For our *Dermocentor occidentalis* adults we observed the most abundances in grasslands (exterior) forest edge, while interior experienced the lowest abundances.
