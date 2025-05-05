@@ -16,14 +16,9 @@ library(multcompView)
 library(multcomp)
 ```
 
-### set working directory for all chunks in this file (default working directory is wherever Rmd file is)
-```{r, setup, include=FALSE}
-setwd("~/Documents/GitHub/Lyme-disease-disk-in-ecotone-habitats/Dataset")
-```
-
 ## Lets read in our data 
 ```{r}
-ticks<-read.csv("Plot_Data copy.csv", header = TRUE, stringsAsFactors = TRUE)
+ticks<-read.csv("Dataset/Plot_Data copy.csv", header = TRUE, stringsAsFactors = TRUE)
 ```
 
 # Null Hypothesis: There are equal abundances of *Ixodes pacificus* in forest interiors, forest edge, and grasslands
